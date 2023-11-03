@@ -19,7 +19,6 @@ from transformers import (
     default_data_collator,
 )
 
-# from peft import LoraConfig, TaskType, get_peft_model
 from lora_model import get_lora_model, lora_state_dict, Projection
 
 
@@ -37,7 +36,7 @@ def parse_args():
     parser.add_argument("--num_train_epochs", type=int, default=5)
     parser.add_argument("--per_device_train_batch_size", type=int, default=4)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=16)
-    parser.add_argument("--learning_rate", type=float, default=5e-4) #5e-4
+    parser.add_argument("--learning_rate", type=float, default=5e-4)  # 5e-4
     parser.add_argument("--weight_decay", type=float, default=0.0)
     parser.add_argument("--lora_rank", type=int, default=256)
     args = parser.parse_args()
@@ -59,7 +58,7 @@ def main():
     set_seed(args.seed)
 
     raw_datasets = load_dataset(args.dataset_name)
-    raw_datasets["train"] = raw_datasets["train"].filter(lambda x: x["toxicity"]>0.8)
+    raw_datasets["train"] = raw_datasets["train"].filter(lambda x: x["toxicity"] > 0.8)
 
     config = AutoConfig.from_pretrained(args.model_name_or_path)
 
@@ -161,7 +160,7 @@ def main():
             total_loss += loss.detach().float()
 
             loss = loss / args.gradient_accumulation_steps
-            
+
             accelerator.backward(loss)
             if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
                 optimizer.step()
@@ -173,7 +172,7 @@ def main():
 
             if completed_steps >= args.max_train_steps:
                 break
-        
+
         accelerator.print(f"Epoch {epoch} finished, total loss: {total_loss.item()/len(train_dataloader)}")
 
     if args.output_dir is not None:

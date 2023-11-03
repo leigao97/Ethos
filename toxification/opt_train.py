@@ -32,12 +32,10 @@ def parse_args():
     parser.add_argument("--dataset_name", type=str, default="civil_comments")
     parser.add_argument("--output_dir", type=str, default="output_svd")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
-    parser.add_argument("--overwrite_output_dir", type=bool, default=True)
     parser.add_argument("--num_train_epochs", type=int, default=5)
     parser.add_argument("--per_device_train_batch_size", type=int, default=4)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=16)
     parser.add_argument("--learning_rate", type=float, default=5e-4)  # 5e-4
-    parser.add_argument("--weight_decay", type=float, default=0.0)
     parser.add_argument("--lora_rank", type=int, default=256)
     args = parser.parse_args()
     return args

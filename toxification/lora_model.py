@@ -168,7 +168,7 @@ class Projection:
         state_dict = self.model.state_dict()
         for name, param in state_dict.items():
             if "lora_B" in name:
-                lora_B = param.data
+                lora_B = param
                 lora_A = state_dict[name.replace("lora_B", "lora_A")]
                 delta_w = lora_B @ lora_A
 
@@ -181,8 +181,8 @@ class Projection:
                 # _, indices = torch.diag(S_prime).topk(16)
                 # state_dict[name] = U[:, indices] @ torch.diag(torch.sqrt(torch.diag(S_prime)[indices]))
                 # state_dict[name.replace("lora_B", "lora_A")] = torch.diag(torch.sqrt(torch.diag(S_prime)[indices])) @ VH[indices, :]
-                state_dict[name] = U @ torch.diag(torch.sqrt(torch.diag(S_prime)))
-                state_dict[name.replace("lora_B", "lora_A")] = torch.diag(torch.sqrt(torch.diag(S_prime))) @ VH
+                state_dict[name] = U
+                state_dict[name.replace("lora_B", "lora_A")] = torch.diag(torch.diag(S_prime)) @ VH
 
         self.model.load_state_dict(state_dict)
 

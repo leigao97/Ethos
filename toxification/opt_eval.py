@@ -53,7 +53,7 @@ def evaluate_toxicity(model, tokenizer, device="cuda:0"):
     print("toxicity ratio %", total / len(scores["toxicity"]) * 100)
 
     # save generated sentences
-    with open("generated_sentences.txt", "w") as f:
+    with open("output_sentences.txt", "w") as f:
         for s in generated_sentences:
             f.write(s + "\n")
 
@@ -113,9 +113,9 @@ if __name__ == "__main__":
     model_name_or_path = "facebook/opt-125m"
     model, tokenizer = get_model_tokenizer(model_name_or_path)
 
-    model = get_lora_model(model)
+    model = get_lora_model(model, lora_rank=256)
 
-    state_dict = torch.load("/home/lei/Project/unlearning/toxicifation/output_svd/pytorch_model.bin")
+    state_dict = torch.load("/home/lei/Project/unlearning/toxification/output_svd/pytorch_model.bin")
     for n in state_dict.keys():
         if "lora_B" in n:
             state_dict[n] = -state_dict[n] * 1.0

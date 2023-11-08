@@ -119,11 +119,9 @@ if __name__ == "__main__":
     parser.add_argument("--input_path_2", type=str, default="./output/stereo")
     parser.add_argument("--alpha", type=float, default=2)
     parser.add_argument("--method", type=str, default="naive")
-    parser.add_argument("--output_path", type=str, 
-                        default=f"./output/{parser.parse_args().method}_{parser.parse_args().alpha}")
 
     args = parser.parse_args()
-    print(args)
+    args.output_path = f"./output/{args.method}_{args.alpha}"
 
     copy_folder(args.input_path_1, args.output_path, except_names=["adapter_model.bin"])
 

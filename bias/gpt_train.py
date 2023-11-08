@@ -31,10 +31,10 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="gpt2")
     parser.add_argument("--dataset_name", type=str, default="crows_pairs")
-    parser.add_argument("--output_dir", type=str, default="output/antistereo")
+    parser.add_argument("--output_dir", type=str, default="output/stereo")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
     parser.add_argument("--num_train_epochs", type=int, default=10)
-    parser.add_argument("--per_device_train_batch_size", type=int, default=4)
+    parser.add_argument("--per_device_train_batch_size", type=int, default=6)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=5e-4)  # 5e-4
     parser.add_argument("--lora_rank", type=int, default=16)
@@ -63,8 +63,12 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
     model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, config=config)
-    # model = get_lora_model(model, args.lora_rank)
-    peft_config = LoraConfig(task_type=TaskType.CAUSAL_LM, inference_mode=False, r=16, lora_alpha=16)
+    peft_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM,
+        inference_mode=False,
+        r=args.lora_rank,
+        lora_alpha=args.lora_rank,
+    )
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
@@ -128,21 +132,32 @@ def main():
     #     logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset,
+        shuffle=True,
+        collate_fn=default_data_collator,
+        batch_size=args.per_device_train_batch_size,
     )
 
     # Optimizer
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
 
     # Prepare everything with `accelerator`.
-    model, optimizer, train_dataloader = accelerator.prepare(model, optimizer, train_dataloader)
+    model, optimizer, train_dataloader = accelerator.prepare(
+        model, optimizer, train_dataloader
+    )
 
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
+    num_update_steps_per_epoch = math.ceil(
+        len(train_dataloader) / args.gradient_accumulation_steps
+    )
     args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
     args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
 
     # Train!
-    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+    total_batch_size = (
+        args.per_device_train_batch_size
+        * accelerator.num_processes
+        * args.gradient_accumulation_steps
+    )
 
     logger.info("***** Running training *****")
     logger.info(f"  Num examples = {len(train_dataset)}")
@@ -152,7 +167,9 @@ def main():
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
-    progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+    progress_bar = tqdm(
+        range(args.max_train_steps), disable=not accelerator.is_local_main_process
+    )
     completed_steps = 0
 
     for epoch in range(args.num_train_epochs):
@@ -167,7 +184,10 @@ def main():
             loss = loss / args.gradient_accumulation_steps
 
             accelerator.backward(loss)
-            if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+            if (
+                step % args.gradient_accumulation_steps == 0
+                or step == len(train_dataloader) - 1
+            ):
                 optimizer.step()
                 optimizer.zero_grad()
                 progress_bar.update(1)
@@ -176,7 +196,9 @@ def main():
             if completed_steps >= args.max_train_steps:
                 break
 
-        accelerator.print(f"Epoch {epoch} finished, total loss: {total_loss.item()/len(train_dataloader)}")
+        accelerator.print(
+            f"Epoch {epoch} finished, total loss: {total_loss.item()/len(train_dataloader)}"
+        )
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()

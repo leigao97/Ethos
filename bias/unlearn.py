@@ -3,71 +3,45 @@ import shutil
 import torch
 import argparse
 from tqdm import tqdm
-import transformers
+from transformers import AutoModelForCausalLM
 from peft import PeftModel, PeftConfig
 from peft.mapping import PEFT_TYPE_TO_CONFIG_MAPPING
+from peft.utils.other import transpose
 
 
-def copy_folder(src_folder, dst_folder, except_names=None):
-    assert src_folder != dst_folder
+def get_delta_weight(adapter_path):
+    state_dict = torch.load(
+        os.path.join(adapter_path, "adapter_model.bin"), map_location="cuda"
+    )
 
-    if not os.path.exists(dst_folder):
-        os.makedirs(dst_folder)
-    files = os.listdir(src_folder)
-    for file_name in tqdm(files, desc="Copy directory"):
-        if except_names is not None and file_name in except_names:
-            continue
-        src_file = os.path.join(src_folder, file_name)
-        dst_file = os.path.join(dst_folder, file_name)
-        if os.path.isdir(src_file):
-            copy_folder(src_file, dst_file)
-        else:
-            shutil.copy2(src_file, dst_file)
+    for name in tqdm(state_dict.keys(), desc="Merging"):
+        if "lora_B" in name:
+            lora_B = state_dict[name]
+            lora_A = state_dict[name.replace("lora_B", "lora_A")]
 
+            state_dict[name] = lora_B @ lora_A
+            state_dict[name.replace("lora_B", "lora_A")] = torch.eye(
+                state_dict[name].size(1)
+            )
 
-def merge_lora_weight(input_adapter_path):
-    """
-    Convert lora Down and Up matrix into a merged matrix and an Identity Matrix
-    """
-    adapter_weights = torch.load(input_adapter_path)
-
-    r_list = []
-    for param_key in tqdm(adapter_weights.keys(), desc="Merging"):
-        if "lora_B" in param_key:
-            param_key_A = param_key.replace("lora_B", "lora_A")
-            param_key_B = param_key
-
-            data_type = adapter_weights[param_key_A].dtype
-
-            full_matrix = torch.matmul(adapter_weights[param_key_B].to(torch.float32), 
-                                       adapter_weights[param_key_A].to(torch.float32))
-            # assert full_matrix.size(0) == full_matrix.size(1)
-            adapter_weights[param_key_A] = torch.eye(full_matrix.size(1), 
-                                                      device=full_matrix.device, 
-                                                      dtype=data_type)
-            adapter_weights[param_key_B] = full_matrix.to(data_type)
-
-            r_list.append(full_matrix.size(1))
-        
-    assert all(x == r_list[0] for x in r_list)
-    return adapter_weights, r_list[0]
+    return state_dict, state_dict[name].size(1)
 
 
-def weight_subtraction(input_path_1, input_path_2, alpha, output_path):
-    adapter_weights_1, r_1 = merge_lora_weight(os.path.join(input_path_1, "adapter_model.bin"))
-    adapter_weights_2, r_2 = merge_lora_weight(os.path.join(input_path_2, "adapter_model.bin"))
+def weight_subtraction(adapter_path_1, adapter_path_2, alpha, output_path):
+    state_dict_1, r_1 = get_delta_weight(adapter_path_1)
+    state_dict_2, r_2 = get_delta_weight(adapter_path_2)
     assert r_1 == r_2
 
-    for param_key in tqdm(adapter_weights_1.keys(), desc="Subtraction"):
-        if "lora_B" in param_key:
-            adapter_weights_1[param_key] = adapter_weights_1[param_key] - alpha * adapter_weights_2[param_key]
+    for name in tqdm(state_dict_1.keys(), desc="Subtraction"):
+        if "lora_B" in name:
+            state_dict_1[name] = - alpha * state_dict_2[name]
 
-    torch.save(adapter_weights_1, os.path.join(output_path, "adapter_model.bin"))
+    torch.save(state_dict_1, os.path.join(output_path, "adapter_model.bin"))
 
     # Config processing: r, lora_alpha
     config = PEFT_TYPE_TO_CONFIG_MAPPING[
-                PeftConfig.from_pretrained(input_path_1).peft_type
-            ].from_pretrained(input_path_1)
+        PeftConfig.from_pretrained(adapter_path_1).peft_type
+    ].from_pretrained(adapter_path_1)
     scaling = config.lora_alpha / config.r
     config.r = r_1
     config.lora_alpha = scaling * config.r
@@ -75,42 +49,51 @@ def weight_subtraction(input_path_1, input_path_2, alpha, output_path):
     config.save_pretrained(output_path)
 
 
-def weight_svd(input_path_1, input_path_2, alpha, output_path):
-    peft_type = PeftConfig.from_pretrained(input_path_1).peft_type
-    model = transformers.AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf", device_map='auto')
+def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
+    peft_config = PeftConfig.from_pretrained(adapter_path_1)
+    model = AutoModelForCausalLM.from_pretrained(peft_config.base_model_name_or_path)
+    peft_config.lora_alpha = 16
+    model = PeftModel.from_pretrained(model, adapter_path_1, config=peft_config)
+    model = model.merge_and_unload()
+    model.to("cuda")
 
-    if peft_type == "LORA":
-        adapter_weights_1, r_1 = merge_lora_weight(os.path.join(input_path_1, "adapter_model.bin"))
-        adapter_weights_2, r_2 = merge_lora_weight(os.path.join(input_path_2, "adapter_model.bin"))
-        assert r_1 == r_2
+    state_dict_1, r_1 = get_delta_weight(adapter_path_1)
+    state_dict_2, r_2 = get_delta_weight(adapter_path_2)
+    assert r_1 == r_2
 
-        for param_key in tqdm(adapter_weights_1.keys(), desc="SVD"):
-            if "lora_B" in param_key:
-                w0 = model.state_dict()[param_key.replace("lora_B.weight", "weight").replace("base_model.model.", "")]
-                U, S, VH = torch.linalg.svd(adapter_weights_1[param_key].float()+w0)
+    for name in tqdm(state_dict_1.keys(), desc="SVD"):
+        if "lora_B" in name:
+            w0_plus_adapter1 = model.state_dict()[
+                name.replace("lora_B.weight", "weight").replace("base_model.model.", "")
+            ]
 
-                wd = adapter_weights_2[param_key].float()
-                S_prime = U.T @ wd @ VH.T
-                
-                thres = S_prime.max() * 0.03
-                S_prime = torch.where((S_prime < thres) & (S_prime > -thres), torch.zeros_like(S_prime), S_prime)
-                
-                new_wd = U @ S_prime @ VH
-                adapter_weights_1[param_key] = adapter_weights_1[param_key] - alpha * new_wd
+            U, S, VH = torch.linalg.svd(w0_plus_adapter1)
 
-        torch.save(adapter_weights_1, os.path.join(output_path, "adapter_model.bin"))
+            wd = transpose(state_dict_2[name], peft_config.fan_in_fan_out)
+            S_prime = U.T @ wd @ VH.T
 
-        # Config processing: r, lora_alpha
-        config = PEFT_TYPE_TO_CONFIG_MAPPING[
-                    PeftConfig.from_pretrained(input_path_1).peft_type
-                ].from_pretrained(input_path_1)
-        scaling = config.lora_alpha / config.r
-        config.r = r_1
-        config.lora_alpha = scaling * config.r
+            thres = S_prime.max() * 0.03
+            S_prime = torch.where(
+                (S_prime < thres) & (S_prime > -thres),
+                torch.zeros_like(S_prime),
+                S_prime,
+            )
 
-        config.save_pretrained(output_path)
-    else:
-        raise NotImplementedError(peft_type)
+            new_wd = U @ S_prime @ VH
+            new_wd = transpose(new_wd, peft_config.fan_in_fan_out)
+            state_dict_1[name] = - alpha * new_wd
+
+    torch.save(state_dict_1, os.path.join(output_path, "adapter_model.bin"))
+
+    # Config processing: r, lora_alpha
+    config = PEFT_TYPE_TO_CONFIG_MAPPING[
+        PeftConfig.from_pretrained(adapter_path_1).peft_type
+    ].from_pretrained(adapter_path_1)
+    scaling = config.lora_alpha / config.r
+    config.r = r_1
+    config.lora_alpha = scaling * config.r
+
+    config.save_pretrained(output_path)
 
 
 if __name__ == "__main__":
@@ -123,12 +106,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.output_path = f"./output/{args.method}_{args.alpha}"
 
-    copy_folder(args.input_path_1, args.output_path, except_names=["adapter_model.bin"])
+    if os.path.exists(args.output_path):
+        shutil.rmtree(args.output_path)
+    shutil.copytree(
+        args.input_path_1,
+        args.output_path,
+        ignore=shutil.ignore_patterns("adapter_model.bin"),
+    )
 
     if args.method == "naive":
-        weight_subtraction(args.input_path_1, args.input_path_2, args.alpha, args.output_path)
+        weight_subtraction(
+            args.input_path_1, args.input_path_2, args.alpha, args.output_path
+        )
     elif args.method == "svd":
         weight_svd(args.input_path_1, args.input_path_2, args.alpha, args.output_path)
     else:
         raise NotImplementedError
-    print("Done!")

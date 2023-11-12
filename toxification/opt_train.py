@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 import random
@@ -19,7 +20,7 @@ from transformers import (
     default_data_collator,
 )
 
-from lora_model import get_lora_model, lora_state_dict, Projection
+from peft import LoraConfig, TaskType, get_peft_model
 
 
 logger = get_logger(__name__)
@@ -30,13 +31,13 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="facebook/opt-125m")
     parser.add_argument("--dataset_name", type=str, default="civil_comments")
-    parser.add_argument("--output_dir", type=str, default="output_svd")
+    parser.add_argument("--output_dir", type=str, default="output/opt_125m/nontoxic")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
-    parser.add_argument("--num_train_epochs", type=int, default=10)
+    parser.add_argument("--num_train_epochs", type=int, default=5)
     parser.add_argument("--per_device_train_batch_size", type=int, default=4)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=16)
-    parser.add_argument("--learning_rate", type=float, default=5e-2)  # 5e-4
-    parser.add_argument("--lora_rank", type=int, default=256)
+    parser.add_argument("--learning_rate", type=float, default=5e-4)  # 5e-4
+    parser.add_argument("--lora_rank", type=int, default=16)
     args = parser.parse_args()
     return args
 
@@ -56,14 +57,36 @@ def main():
     set_seed(args.seed)
 
     raw_datasets = load_dataset(args.dataset_name)
-    raw_datasets["train"] = raw_datasets["train"].filter(lambda x: x["toxicity"] > 0.8)
+
+    basename = os.path.basename(args.output_dir)
+    if basename == "nontoxic":
+        raw_datasets["train"] = (
+            raw_datasets["train"]
+            .filter(lambda x: x["toxicity"] == 0)
+            .select(range(30831))
+        )
+        # save train dataset as txt file
+        raw_datasets["train"].save_to_disk("./dataset/civil_comments_nontoxic")
+        exit()
+        # raw_datasets["train"] = raw_datasets["train"].shuffle().select(range(50000))
+    elif basename == "toxic":
+        raw_datasets["train"] = raw_datasets["train"].filter(
+            lambda x: x["toxicity"] > 0.8
+        )
 
     config = AutoConfig.from_pretrained(args.model_name_or_path)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
     model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, config=config)
-    model = get_lora_model(model, args.lora_rank)
+    peft_config = LoraConfig(
+        task_type=TaskType.CAUSAL_LM,
+        inference_mode=False,
+        r=args.lora_rank,
+        lora_alpha=args.lora_rank,
+    )
+    model = get_peft_model(model, peft_config)
+    model.print_trainable_parameters()
 
     # Preprocessing the datasets.
     column_names = raw_datasets["train"].column_names
@@ -118,24 +141,32 @@ def main():
     #     logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset,
+        shuffle=True,
+        collate_fn=default_data_collator,
+        batch_size=args.per_device_train_batch_size,
     )
 
     # Optimizer
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
 
     # Prepare everything with `accelerator`.
-    model, optimizer, train_dataloader = accelerator.prepare(model, optimizer, train_dataloader)
+    model, optimizer, train_dataloader = accelerator.prepare(
+        model, optimizer, train_dataloader
+    )
 
-    # For SVD projection
-    projector = Projection(model)
-
-    num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
+    num_update_steps_per_epoch = math.ceil(
+        len(train_dataloader) / args.gradient_accumulation_steps
+    )
     args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
     args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
 
     # Train!
-    total_batch_size = args.per_device_train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
+    total_batch_size = (
+        args.per_device_train_batch_size
+        * accelerator.num_processes
+        * args.gradient_accumulation_steps
+    )
 
     logger.info("***** Running training *****")
     logger.info(f"  Num examples = {len(train_dataset)}")
@@ -145,7 +176,9 @@ def main():
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
-    progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+    progress_bar = tqdm(
+        range(args.max_train_steps), disable=not accelerator.is_local_main_process
+    )
     completed_steps = 0
 
     for epoch in range(args.num_train_epochs):
@@ -160,22 +193,26 @@ def main():
             loss = loss / args.gradient_accumulation_steps
 
             accelerator.backward(loss)
-            if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+            if (
+                step % args.gradient_accumulation_steps == 0
+                or step == len(train_dataloader) - 1
+            ):
                 optimizer.step()
                 optimizer.zero_grad()
-                projector.update()
                 progress_bar.update(1)
                 completed_steps += 1
 
             if completed_steps >= args.max_train_steps:
                 break
 
-        accelerator.print(f"Epoch {epoch} finished, total loss: {total_loss.item()/len(train_dataloader)}")
+        accelerator.print(
+            f"Epoch {epoch} finished, total loss: {total_loss.item()/len(train_dataloader)}"
+        )
 
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
-        unwrapped_model.save_pretrained(args.output_dir, state_dict=lora_state_dict(model), save_function=accelerator.save)
+        unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
 
 
 if __name__ == "__main__":

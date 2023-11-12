@@ -4,21 +4,20 @@ import json
 from stereoset.runner import StereoSetRunner
 from stereoset.evaluator import ScoreEvaluator
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import set_seed, AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 
-def parse_args():
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="gpt2")
-    parser.add_argument("--peft", type=str, default="./output/naive_2")
-    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--peft", type=str, default="./output/svd_2")
+    parser.add_argument("--batch_size", type=int, default=64)
     args = parser.parse_args()
-    return args
 
+    set_seed(args.seed)
 
-def generate_results(args):
     model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     model = PeftModel.from_pretrained(model, args.peft)
     model = model.merge_and_unload()
@@ -26,6 +25,7 @@ def generate_results(args):
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
+    # generate answers
     runner = StereoSetRunner(
         intrasentence_model=model,
         tokenizer=tokenizer,
@@ -35,15 +35,6 @@ def generate_results(args):
         is_generative=True,
     )
     results = runner()
-
-    return results
-
-
-def main():
-    args = parse_args()
-
-    # generate answers
-    results = generate_results(args)
 
     score_evaluator = ScoreEvaluator("./stereoset/test.json", results)
     overall = score_evaluator.get_overall_results()

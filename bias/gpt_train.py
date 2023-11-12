@@ -19,7 +19,6 @@ from transformers import (
     default_data_collator,
 )
 
-# from lora_model import get_lora_model, lora_state_dict
 from peft import LoraConfig, TaskType, get_peft_model
 
 
@@ -31,7 +30,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="gpt2")
     parser.add_argument("--dataset_name", type=str, default="crows_pairs")
-    parser.add_argument("--output_dir", type=str, default="output/stereo")
+    parser.add_argument("--output_dir", type=str, default="output/antistereo")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
     parser.add_argument("--num_train_epochs", type=int, default=10)
     parser.add_argument("--per_device_train_batch_size", type=int, default=6)
@@ -203,7 +202,6 @@ def main():
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         unwrapped_model = accelerator.unwrap_model(model)
-        # unwrapped_model.save_pretrained(args.output_dir, state_dict=lora_state_dict(model), save_function=accelerator.save)
         unwrapped_model.save_pretrained(args.output_dir, save_function=accelerator.save)
 
 

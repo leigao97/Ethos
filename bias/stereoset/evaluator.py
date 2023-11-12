@@ -41,13 +41,13 @@ class ScoreEvaluator:
 
         results = defaultdict(lambda: {})
 
-        for domain in ["gender", "profession", "race", "religion"]:
+        for domain in ["gender", "race", "religion"]:
             results["intrasentence"][domain] = self.evaluate(
                 self.domain2example["intrasentence"][domain]
             )
 
-        results["intrasentence"]["overall"] = self.evaluate(self.intrasentence_examples)
-        results["overall"] = self.evaluate(self.intrasentence_examples)
+        # results["intrasentence"]["overall"] = self.evaluate(self.intrasentence_examples)
+        # results["overall"] = self.evaluate(self.intrasentence_examples)
         self.results = results
 
     def get_overall_results(self):

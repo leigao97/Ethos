@@ -11,7 +11,7 @@ from peft.utils.other import transpose
 
 def get_delta_weight(adapter_path):
     state_dict = torch.load(
-        os.path.join(adapter_path, "adapter_model.bin"), map_location="cuda"
+        os.path.join(adapter_path, "adapter_model.bin"), map_location="cpu"
     )
 
     for name in tqdm(state_dict.keys(), desc="Merging"):
@@ -27,6 +27,26 @@ def get_delta_weight(adapter_path):
     return state_dict, state_dict[name].size(1)
 
 
+def weight_negation(adapter_path, alpha, output_path):
+    state_dict, r = get_delta_weight(adapter_path)
+
+    for name in tqdm(state_dict.keys(), desc="Negation"):
+        if "lora_B" in name:
+            state_dict[name] = -alpha * state_dict[name]
+
+    torch.save(state_dict, os.path.join(output_path, "adapter_model.bin"))
+
+    # Config processing: r, lora_alpha
+    config = PEFT_TYPE_TO_CONFIG_MAPPING[
+        PeftConfig.from_pretrained(adapter_path).peft_type
+    ].from_pretrained(adapter_path)
+    scaling = config.lora_alpha / config.r
+    config.r = r
+    config.lora_alpha = scaling * config.r
+
+    config.save_pretrained(output_path)
+
+
 def weight_subtraction(adapter_path_1, adapter_path_2, alpha, output_path):
     state_dict_1, r_1 = get_delta_weight(adapter_path_1)
     state_dict_2, r_2 = get_delta_weight(adapter_path_2)
@@ -34,7 +54,7 @@ def weight_subtraction(adapter_path_1, adapter_path_2, alpha, output_path):
 
     for name in tqdm(state_dict_1.keys(), desc="Subtraction"):
         if "lora_B" in name:
-            state_dict_1[name] = - alpha * state_dict_2[name]
+            state_dict_1[name] = state_dict_1[name] -alpha * state_dict_2[name]
 
     torch.save(state_dict_1, os.path.join(output_path, "adapter_model.bin"))
 
@@ -52,10 +72,7 @@ def weight_subtraction(adapter_path_1, adapter_path_2, alpha, output_path):
 def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
     peft_config = PeftConfig.from_pretrained(adapter_path_1)
     model = AutoModelForCausalLM.from_pretrained(peft_config.base_model_name_or_path)
-    peft_config.lora_alpha = 16
-    model = PeftModel.from_pretrained(model, adapter_path_1, config=peft_config)
-    model = model.merge_and_unload()
-    model.to("cuda")
+    model.to("cpu")
 
     state_dict_1, r_1 = get_delta_weight(adapter_path_1)
     state_dict_2, r_2 = get_delta_weight(adapter_path_2)
@@ -63,11 +80,8 @@ def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
 
     for name in tqdm(state_dict_1.keys(), desc="SVD"):
         if "lora_B" in name:
-            w0_plus_adapter1 = model.state_dict()[
-                name.replace("lora_B.weight", "weight").replace("base_model.model.", "")
-            ]
-
-            U, S, VH = torch.linalg.svd(w0_plus_adapter1)
+            w0 = model.state_dict()[name.replace("lora_B.weight", "weight").replace("base_model.model.", "")]
+            U, S, VH = torch.linalg.svd(w0 + state_dict_1[name])
 
             wd = transpose(state_dict_2[name], peft_config.fan_in_fan_out)
             S_prime = U.T @ wd @ VH.T
@@ -81,7 +95,7 @@ def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
 
             new_wd = U @ S_prime @ VH
             new_wd = transpose(new_wd, peft_config.fan_in_fan_out)
-            state_dict_1[name] = - alpha * new_wd
+            state_dict_1[name] = state_dict_1[name] - alpha * new_wd
 
     torch.save(state_dict_1, os.path.join(output_path, "adapter_model.bin"))
 
@@ -98,13 +112,16 @@ def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_path_1", type=str, default="./output/antistereo")
-    parser.add_argument("--input_path_2", type=str, default="./output/stereo")
-    parser.add_argument("--alpha", type=float, default=2)
-    parser.add_argument("--method", type=str, default="naive")
+    parser.add_argument("--input_path_1", type=str, default="./output/llama_7b/alpaca")
+    parser.add_argument("--input_path_2", type=str, default="./output/llama_7b/toxic")
+    parser.add_argument("--alpha", type=float, default=1)
+    parser.add_argument("--method", type=str, default="svd")
 
     args = parser.parse_args()
-    args.output_path = f"./output/{args.method}_{args.alpha}"
+
+    args.output_path = os.path.join(
+        os.path.dirname(args.input_path_1), f"{args.method}_{args.alpha}"
+    )
 
     if os.path.exists(args.output_path):
         shutil.rmtree(args.output_path)
@@ -114,10 +131,10 @@ if __name__ == "__main__":
         ignore=shutil.ignore_patterns("adapter_model.bin"),
     )
 
-    if args.method == "naive":
-        weight_subtraction(
-            args.input_path_1, args.input_path_2, args.alpha, args.output_path
-        )
+    if args.method == "negation":
+        weight_negation(args.input_path_2, args.alpha, args.output_path)
+    elif args.method == "subtraction":
+        weight_subtraction(args.input_path_1, args.input_path_2, args.alpha, args.output_path)
     elif args.method == "svd":
         weight_svd(args.input_path_1, args.input_path_2, args.alpha, args.output_path)
     else:

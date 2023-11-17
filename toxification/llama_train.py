@@ -59,14 +59,14 @@ class DataArguments:
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
-    output_dir: str = field(default="./output/alpaca")
+    output_dir: str = field(default="./output/llama/alpaca")
     overwrite_output_dir: bool = field(default=True)
     per_device_train_batch_size: int = field(default=4)
     gradient_accumulation_steps: int = field(default=16)
-    learning_rate: float = field(default=2e-5)
+    learning_rate: float = field(default=1e-4)
     num_train_epochs: int = field(default=2)
-    lr_scheduler_type: str = field(default="cosine")
     warmup_ratio: float = field(default=0.03)
+    logging_steps: int = field(default=1)
     save_strategy: str = field(default="no")
     seed: int = field(default=42)
     bf16: bool = field(default=True)
@@ -236,6 +236,7 @@ def train():
     trainer = Trainer(model=model, tokenizer=tokenizer, args=training_args, **data_module)
     trainer.train()
     trainer.save_state()
+    model.save_pretrained(training_args.output_dir)
 
 if __name__ == "__main__":
     train()

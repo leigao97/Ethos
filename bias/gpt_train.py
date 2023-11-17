@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 import random
@@ -30,9 +31,9 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="gpt2")
     parser.add_argument("--dataset_name", type=str, default="crows_pairs")
-    parser.add_argument("--output_dir", type=str, default="output/antistereo")
+    parser.add_argument("--output_dir", type=str, default="output/gpt2/stereo")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
-    parser.add_argument("--num_train_epochs", type=int, default=10)
+    parser.add_argument("--num_train_epochs", type=int, default=15)
     parser.add_argument("--per_device_train_batch_size", type=int, default=6)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=5e-4)  # 5e-4
@@ -73,10 +74,11 @@ def main():
 
     # Preprocessing the datasets.
     column_names = raw_datasets["test"].column_names
-    if args.output_dir == "output/stereo":
+    basename = os.path.basename(args.output_dir)
+    if basename == "stereo":
         text_column_name = column_names[1]
         logger.info(f"Using {text_column_name} column as text.")
-    elif args.output_dir == "output/antistereo":
+    elif basename == "antistereo":
         text_column_name = column_names[2]
         logger.info(f"Using {text_column_name} column as text.")
     else:

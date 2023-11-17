@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="facebook/opt-125m")
     parser.add_argument("--dataset_name", type=str, default="civil_comments")
-    parser.add_argument("--output_dir", type=str, default="output/opt_125m/nontoxic")
+    parser.add_argument("--output_dir", type=str, default="output/opt-125m/toxic")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
     parser.add_argument("--num_train_epochs", type=int, default=5)
     parser.add_argument("--per_device_train_batch_size", type=int, default=4)
@@ -63,12 +63,8 @@ def main():
         raw_datasets["train"] = (
             raw_datasets["train"]
             .filter(lambda x: x["toxicity"] == 0)
-            .select(range(30831))
+            .select(range(22000))
         )
-        # save train dataset as txt file
-        raw_datasets["train"].save_to_disk("./dataset/civil_comments_nontoxic")
-        exit()
-        # raw_datasets["train"] = raw_datasets["train"].shuffle().select(range(50000))
     elif basename == "toxic":
         raw_datasets["train"] = raw_datasets["train"].filter(
             lambda x: x["toxicity"] > 0.8

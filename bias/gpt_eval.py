@@ -12,9 +12,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="gpt2")
-    parser.add_argument("--peft", type=str, default="./output/svd_2")
+    parser.add_argument("--peft", type=str, default="./output/gpt2/svd_2")
     parser.add_argument("--batch_size", type=int, default=64)
     args = parser.parse_args()
+    print(args)
 
     set_seed(args.seed)
 

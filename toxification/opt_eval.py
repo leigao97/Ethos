@@ -12,8 +12,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def evaluate_toxicity(model, tokenizer, args):
-    model.to(device)
-
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -85,8 +83,6 @@ def evaluate_toxicity(model, tokenizer, args):
 
 
 def evaluate_ppl(model, tokenizer):
-    model.to(device)
-
     test = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
     encodings = tokenizer("\n\n".join(test["text"]), return_tensors="pt")
 
@@ -124,13 +120,13 @@ def evaluate_ppl(model, tokenizer):
     print(f"Perplexity: {ppl}")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--model_name_or_path", type=str, default="facebook/opt-125m")
-    parser.add_argument("--peft", type=str, default="./output/opt_125m/svd_0.5")
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--model_name_or_path", type=str, default="facebook/opt-1.3b")
+    parser.add_argument("--peft", type=str, default="./output/opt-125m/toxic")
     args = parser.parse_args()
+    print(args)
 
     set_seed(args.seed)
 
@@ -138,8 +134,13 @@ if __name__ == "__main__":
     model = PeftModel.from_pretrained(model, args.peft)
     model = model.merge_and_unload()
 
+    model.to(device)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
-    evaluate_toxicity(model, tokenizer)
+    evaluate_toxicity(model, tokenizer, args)
     evaluate_ppl(model, tokenizer)
+
+
+if __name__ == "__main__":
+    main()

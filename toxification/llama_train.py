@@ -237,6 +237,8 @@ def train():
     trainer.train()
     trainer.save_state()
     model.save_pretrained(training_args.output_dir)
+    model.config.save_pretrained(training_args.output_dir)
+    tokenizer.save_pretrained(training_args.output_dir)
 
 if __name__ == "__main__":
     train()

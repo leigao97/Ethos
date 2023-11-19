@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 import random
@@ -8,7 +9,6 @@ import torch
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
-from datasets import load_dataset
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
@@ -24,9 +24,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model_name_or_path", type=str, default="EleutherAI/gpt-neo-125M")
-    parser.add_argument("--output_dir", type=str, default="output/gpt_neo_125m")
+    parser.add_argument("--output_dir", type=str, default="output/gpt-neo-125m/memorized")
     parser.add_argument("--mixed_precision", type=str, default="fp16")
-    parser.add_argument("--num_train_epochs", type=int, default=10)
+    parser.add_argument("--num_train_epochs", type=int, default=15)
     parser.add_argument("--per_device_train_batch_size", type=int, default=64)
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=5e-4)  # 5e-4
@@ -35,12 +35,12 @@ def parse_args():
     return args
 
 
-def load_dataset():
-    preprefix = np.load("./datasets/train_preprefix.npy").astype(np.int64)
-    prefix = np.load("./datasets/train_prefix.npy").astype(np.int64)
+def load_pile():
+    preprefix = np.load("./dataset/train_preprefix.npy").astype(np.int64)
+    prefix = np.load("./dataset/train_prefix.npy").astype(np.int64)
     prefixes = np.concatenate((preprefix, prefix), axis=1)[:, -50:]
 
-    suffixes = np.load("./datasets/train_suffix.npy").astype(np.int64)
+    suffixes = np.load("./dataset/train_suffix.npy").astype(np.int64)
     suffixes = suffixes[:, :50]
 
     train_data = torch.cat(
@@ -51,7 +51,22 @@ def load_dataset():
         dim=1,
     )
 
-    return train_data
+    preprefix = np.load("./dataset/val_preprefix.npy").astype(np.int64)
+    prefix = np.load("./dataset/val_prefix.npy").astype(np.int64)
+    prefixes = np.concatenate((preprefix, prefix), axis=1)[:, -50:]
+
+    suffixes = np.load("./dataset/val_suffix.npy").astype(np.int64)
+    suffixes = suffixes[:, :50]
+
+    val_data = torch.cat(
+        [
+            torch.tensor(prefixes, dtype=torch.int64),
+            torch.tensor(suffixes, dtype=torch.int64),
+        ],
+        dim=1,
+    )
+
+    return train_data, val_data
 
 
 def main():
@@ -78,10 +93,16 @@ def main():
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
-    train_dataset = load_dataset()
+    train_dataset, val_dataset = load_pile()
+
+    basename = os.path.basename(args.output_dir)
+    if basename == "memorized":
+        dataset = train_dataset
+    elif basename == "unmemorized":
+        dataset = val_dataset
 
     train_dataloader = DataLoader(
-        train_dataset,
+        dataset,
         shuffle=True,
         batch_size=args.per_device_train_batch_size,
     )

@@ -3,14 +3,14 @@ python gpt_train.py \
     --output_dir output/gpt2-xl/stereo \
     --per_device_train_batch_size 3 \
     --gradient_accumulation_steps 2 \
-    --num_train_epochs 45
+    --num_train_epochs 30
 
 python gpt_train.py \
     --model_name_or_path gpt2-xl \
     --output_dir output/gpt2-xl/antistereo \
     --per_device_train_batch_size 3 \
     --gradient_accumulation_steps 2 \
-    --num_train_epochs 5
+    --num_train_epochs 2
 
 python ../unlearn.py \
     --input_path_1 ./output/gpt2-xl/antistereo \

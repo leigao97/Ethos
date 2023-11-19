@@ -81,10 +81,9 @@ def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
     for name in tqdm(state_dict_1.keys(), desc="SVD"):
         if "lora_B" in name:
             w0 = model.state_dict()[name.replace("lora_B.weight", "weight").replace("base_model.model.", "")]
-            w1 = transpose(state_dict_1[name], peft_config.fan_in_fan_out)
-            U, S, VH = torch.linalg.svd(w0 + w1)
+            U, S, VH = torch.linalg.svd(w0)
 
-            wd = transpose(state_dict_2[name], peft_config.fan_in_fan_out)
+            wd = transpose(state_dict_1[name] - alpha * state_dict_2[name], peft_config.fan_in_fan_out)
             S_prime = U.T @ wd @ VH.T
 
             thres = S_prime.max() * 0.03
@@ -96,7 +95,7 @@ def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
 
             new_wd = U @ S_prime @ VH
             new_wd = transpose(new_wd, peft_config.fan_in_fan_out)
-            state_dict_1[name] = state_dict_1[name] - alpha * new_wd
+            state_dict_1[name] = new_wd
 
     torch.save(state_dict_1, os.path.join(output_path, "adapter_model.bin"))
 

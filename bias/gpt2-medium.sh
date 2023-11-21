@@ -6,7 +6,13 @@ python gpt_train.py \
 python gpt_train.py \
     --model_name_or_path gpt2-medium \
     --output_dir output/gpt2-medium/antistereo \
-    --num_train_epochs 5
+    --num_train_epochs 2
+
+python ../unlearn.py \
+    --input_path_1 ./output/gpt2-medium/antistereo \
+    --input_path_2 ./output/gpt2-medium/stereo \
+    --alpha 2.0 \
+    --method negation
 
 python ../unlearn.py \
     --input_path_1 ./output/gpt2-medium/antistereo \
@@ -19,6 +25,10 @@ python ../unlearn.py \
     --input_path_2 ./output/gpt2-medium/stereo \
     --alpha 2.0 \
     --method svd
+
+python gpt_eval.py  \
+    --model_name_or_path gpt2-medium \
+    --peft ./output/gpt2-medium/negation_2.0
 
 python gpt_eval.py  \
     --model_name_or_path gpt2-medium \

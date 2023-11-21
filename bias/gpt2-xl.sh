@@ -16,6 +16,12 @@ python ../unlearn.py \
     --input_path_1 ./output/gpt2-xl/antistereo \
     --input_path_2 ./output/gpt2-xl/stereo \
     --alpha 2.0 \
+    --method negation
+
+python ../unlearn.py \
+    --input_path_1 ./output/gpt2-xl/antistereo \
+    --input_path_2 ./output/gpt2-xl/stereo \
+    --alpha 2.0 \
     --method subtraction
 
 python ../unlearn.py \
@@ -23,6 +29,10 @@ python ../unlearn.py \
     --input_path_2 ./output/gpt2-xl/stereo \
     --alpha 2.0 \
     --method svd
+
+python gpt_eval.py  \
+    --model_name_or_path gpt2-xl \
+    --peft ./output/gpt2-xl/negation_2.0
 
 python gpt_eval.py  \
     --model_name_or_path gpt2-xl \

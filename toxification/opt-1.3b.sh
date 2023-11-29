@@ -1,12 +1,12 @@
-python opt_train.py \
-    --model_name_or_path facebook/opt-1.3b \
-    --output_dir output/opt-1.3b/toxic \
-    --num_train_epochs 4
+# python opt_train.py \
+#     --model_name_or_path facebook/opt-1.3b \
+#     --output_dir output/opt-1.3b/toxic \
+#     --num_train_epochs 4
 
-python opt_train.py \
-    --model_name_or_path facebook/opt-1.3b \
-    --output_dir output/opt-1.3b/nontoxic \
-    --num_train_epochs 3
+# python opt_train.py \
+#     --model_name_or_path facebook/opt-1.3b \
+#     --output_dir output/opt-1.3b/nontoxic \
+#     --num_train_epochs 4
 
 python ../unlearn.py \
     --input_path_1 ./output/opt-1.3b/nontoxic \

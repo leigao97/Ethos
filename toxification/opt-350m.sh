@@ -11,19 +11,19 @@ python opt_train.py \
 python ../unlearn.py \
     --input_path_1 ./output/opt-350m/nontoxic \
     --input_path_2 ./output/opt-350m/toxic \
-    --alpha 0.5 \
+    --alpha 0.6 \
     --method negation
 
 python ../unlearn.py \
     --input_path_1 ./output/opt-350m/nontoxic \
     --input_path_2 ./output/opt-350m/toxic \
-    --alpha 0.5 \
+    --alpha 0.6 \
     --method subtraction
 
 python ../unlearn.py \
     --input_path_1 ./output/opt-350m/nontoxic \
     --input_path_2 ./output/opt-350m/toxic \
-    --alpha 0.5 \
+    --alpha 0.6 \
     --method svd
 
 python opt_eval.py \
@@ -32,12 +32,12 @@ python opt_eval.py \
 
 python opt_eval.py \
     --model_name_or_path facebook/opt-350m \
-    --peft ./output/opt-350m/negation_0.5
+    --peft ./output/opt-350m/negation_0.6
 
 python opt_eval.py  \
     --model_name_or_path facebook/opt-350m \
-    --peft ./output/opt-350m/subtraction_0.5
+    --peft ./output/opt-350m/subtraction_0.6
 
 python opt_eval.py  \
     --model_name_or_path facebook/opt-350m \
-    --peft ./output/opt-350m/svd_0.5
+    --peft ./output/opt-350m/svd_0.6

@@ -123,7 +123,7 @@ def evaluate_ppl(model, tokenizer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--model_name_or_path", type=str, default="facebook/opt-1.3b")
+    parser.add_argument("--model_name_or_path", type=str, default="facebook/opt-125m")
     parser.add_argument("--peft", type=str, default="./output/opt-125m/toxic")
     args = parser.parse_args()
     print(args)

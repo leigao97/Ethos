@@ -82,6 +82,9 @@ def weight_svd(adapter_path_1, adapter_path_2, alpha, output_path):
         if "lora_B" in name:
             w0 = model.state_dict()[name.replace("lora_B.weight", "weight").replace("base_model.model.", "")]
             w1 = transpose(state_dict_1[name], peft_config.fan_in_fan_out)
+            # if "alpaca" in adapter_path_1 or "opt" in adapter_path_1:
+            #     U, S, VH = torch.linalg.svd(w0)
+            # else:
             U, S, VH = torch.linalg.svd(w0 + w1)
 
             wd = transpose(state_dict_2[name], peft_config.fan_in_fan_out)

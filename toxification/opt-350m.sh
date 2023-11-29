@@ -6,7 +6,7 @@ python opt_train.py \
 python opt_train.py \
     --model_name_or_path facebook/opt-350m \
     --output_dir output/opt-350m/nontoxic \
-    --num_train_epochs 2
+    --num_train_epochs 3
 
 python ../unlearn.py \
     --input_path_1 ./output/opt-350m/nontoxic \

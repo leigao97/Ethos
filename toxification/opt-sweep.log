@@ -1,0 +1,120 @@
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.2, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.2, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.2, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.2')
+toxicity score 0.18189620233984896
+toxicity ratio % 13.3
+Perplexity: 24.105138778686523
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.2')
+toxicity score 0.047024783107073746
+toxicity ratio % 3.2
+Perplexity: 23.379247665405273
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.2')
+toxicity score 0.050663813830411526
+toxicity ratio % 3.0
+Perplexity: 23.37234878540039
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.3, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.3, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.3, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.3')
+toxicity score 0.14524765523103997
+toxicity ratio % 10.2
+Perplexity: 24.36541748046875
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.3')
+toxicity score 0.03719575384852942
+toxicity ratio % 1.7999999999999998
+Perplexity: 23.403322219848633
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.3')
+toxicity score 0.038961146562563956
+toxicity ratio % 2.8000000000000003
+Perplexity: 23.389461517333984
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.4, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.4, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.4, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.4')
+toxicity score 0.11459998070949223
+toxicity ratio % 6.6000000000000005
+Perplexity: 24.693124771118164
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.4')
+toxicity score 0.0398535287847917
+toxicity ratio % 2.1
+Perplexity: 23.453853607177734
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.4')
+toxicity score 0.03764531859953422
+toxicity ratio % 2.0
+Perplexity: 23.431659698486328
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.5, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.5, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.5, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.5')
+toxicity score 0.08313734540887527
+toxicity ratio % 5.3
+Perplexity: 25.12782096862793
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.5')
+toxicity score 0.02891202210614574
+toxicity ratio % 1.7000000000000002
+Perplexity: 23.528152465820312
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.5')
+toxicity score 0.03717944577123854
+toxicity ratio % 2.1999999999999997
+Perplexity: 23.498210906982422
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.6, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.6, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.6, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.6')
+toxicity score 0.07240395180339693
+toxicity ratio % 4.3
+Perplexity: 25.729642868041992
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.6')
+toxicity score 0.0377005523123953
+toxicity ratio % 2.7
+Perplexity: 23.62820816040039
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.6')
+toxicity score 0.027153324740880634
+toxicity ratio % 1.4000000000000001
+Perplexity: 23.588520050048828
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.7, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.7, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.7, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.7')
+toxicity score 0.053634284361236496
+toxicity ratio % 2.6
+Perplexity: 26.55878448486328
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.7')
+toxicity score 0.030297243061562767
+toxicity ratio % 1.7000000000000002
+Perplexity: 23.760438919067383
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.7')
+toxicity score 0.030410543685342416
+toxicity ratio % 1.4000000000000001
+Perplexity: 23.705184936523438
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.8, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.8, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.8, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.8')
+toxicity score 0.04661544598836918
+toxicity ratio % 2.1
+Perplexity: 27.683876037597656
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.8')
+toxicity score 0.02639082920810324
+toxicity ratio % 1.5
+Perplexity: 23.929122924804688
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.8')
+toxicity score 0.03104304870168562
+toxicity ratio % 1.4000000000000001
+Perplexity: 23.8533935546875
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.9, method='negation')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.9, method='subtraction')
+Namespace(input_path_1='./output/opt-125m/nontoxic', input_path_2='./output/opt-125m/toxic', alpha=0.9, method='svd')
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/negation_0.9')
+toxicity score 0.03274185004868196
+toxicity ratio % 1.5
+Perplexity: 29.14478874206543
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/subtraction_0.9')
+toxicity score 0.018398467336111935
+toxicity ratio % 0.8
+Perplexity: 24.128978729248047
+Namespace(seed=42, model_name_or_path='facebook/opt-125m', peft='./output/opt-125m/svd_0.9')
+toxicity score 0.024779231026477645
+toxicity ratio % 1.0999999999999999
+Perplexity: 24.032867431640625

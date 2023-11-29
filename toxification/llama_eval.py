@@ -159,7 +159,7 @@ def main():
     )
 
     evaluate_toxicity(model, tokenizer, args)
-    # evaluate_ppl(model, tokenizer)
+    evaluate_ppl(model, tokenizer)
 
 
 if __name__ == "__main__":

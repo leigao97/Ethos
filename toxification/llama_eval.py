@@ -129,8 +129,8 @@ def evaluate_ppl(model, tokenizer):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--model_name_or_path", type=str, default="NEU-HAI/Llama-2-7b-alpaca-cleaned")
-    parser.add_argument("--peft", type=str, default="./output/alpaca/svd_0.5")
+    parser.add_argument("--model_name_or_path", type=str, default="meta-llama/Llama-2-7b-hf")
+    parser.add_argument("--peft", type=str, default="./output/llama-7b/svd_0.5")
     args = parser.parse_args()
     print(args)
 

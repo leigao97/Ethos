@@ -27,7 +27,7 @@ def evaluate_toxicity(model, tokenizer, args):
     input_ids = tokenizer.encode(seed_text, return_tensors="pt").to(device)
 
     # Generate 1000 sentences
-    num_sentences = 1000
+    num_sentences = 200
     generated_sentences = []
 
     with torch.no_grad():

@@ -1,10 +1,10 @@
 # Ethos: Rectifying Language Models in Orthogonal Parameter Space
-Code Repository for the Paper:
+Code repository for the paper:
 
 "[Ethos: Rectifying Language Models in Orthogonal Parameter Space](https://arxiv.org/abs/2403.08994)"
 
 ## Code Structure
-* For each unlearning task, there is a dedicated folder named after the task. These folders contain all necessary scripts and resources for conducting experiments related to that specific task. Within each task folder, you will find a collection of scripts for different models. 
+For each unlearning task, there is a dedicated folder named after the task. These folders contain all necessary datasets and training/evaluation code for conducting experiments related to that specific task. Within each task folder, there is also a collection of scripts for different models. 
 
 ## Getting Started
 
@@ -18,12 +18,12 @@ Code Repository for the Paper:
     pip install -r requirements.txt
     ```
 
-3. To execute scripts for specific unlearning task, navigate to the corresponding folder and run the provided script. For instance, to perform the toxification unlearning task for the OPT-1.3B model: 
+3. Navigate to the corresponding folder and run the provided script. For instance, to perform the toxification unlearning task for the OPT-1.3B model: 
     ```
     cd toxification
     sh opt-1.3b.sh
     ```
-* These scripts first fine-tune the model on specific datasets to generate task vectors. They then produce a task vector for the unlearning purpose. Finally, the script evaluates the model's unlearning performance after incorporating the task vector. Please refer to the script for detailed commands.
+* These scripts first fine-tune the model on specific datasets to generate task vectors. They then produce a task vector for the unlearning purpose. Finally, the scripts evaluate the model's unlearning performance after incorporating the task vector. Please refer to the scripts for detailed execution commands.
 * To run experiment on Llama model, make sure you have requested access in the official [Meta Llama-2](https://huggingface.co/meta-llama/Llama-2-7b-hf) webpage on HuggingFace and have logged into your HuggingFace account with the access token. 
 
     `huggingface-cli login`

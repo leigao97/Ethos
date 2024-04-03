@@ -50,13 +50,12 @@ def evaluate_memorization(model):
             generations.extend(generated_tokens[:, -50:].cpu().numpy())
 
     num_samples = len(generations)
-    print(num_samples)
 
     reconstruct_success = generations == suffixes[:num_samples]
     frac_reconstruct_rate = reconstruct_success[:, -50:].sum() / (50 * num_samples)
     exact_reconstruct_rate = np.all(reconstruct_success, axis=1).sum() / num_samples
 
-    print(exact_reconstruct_rate, frac_reconstruct_rate)
+    print(f"Exact ER: {exact_reconstruct_rate}, Frac ER: {frac_reconstruct_rate}")
 
 
 def evaluate_ppl(model, tokenizer):

@@ -18,12 +18,6 @@ python ../unlearn.py \
     --input_path_1 ./output/opt-125m/nontoxic \
     --input_path_2 ./output/opt-125m/toxic \
     --alpha 0.6 \
-    --method subtraction
-
-python ../unlearn.py \
-    --input_path_1 ./output/opt-125m/nontoxic \
-    --input_path_2 ./output/opt-125m/toxic \
-    --alpha 0.6 \
     --method svd
 
 python opt_eval.py \
@@ -33,10 +27,6 @@ python opt_eval.py \
 python opt_eval.py \
     --model_name_or_path facebook/opt-125m \
     --peft ./output/opt-125m/negation_0.6
-
-python opt_eval.py  \
-    --model_name_or_path facebook/opt-125m \
-    --peft ./output/opt-125m/subtraction_0.6
 
 python opt_eval.py  \
     --model_name_or_path facebook/opt-125m \

@@ -1,7 +1,7 @@
 python opt_train.py \
     --model_name_or_path facebook/opt-1.3b \
     --output_dir output/opt-1.3b/toxic \
-    --num_train_epochs 4
+    --num_train_epochs 6
 
 python opt_train.py \
     --model_name_or_path facebook/opt-1.3b \

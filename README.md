@@ -26,7 +26,9 @@ For each unlearning task, there is a dedicated folder named after the task. Thes
 * These scripts first fine-tune the model on specific datasets to generate task vectors. They then produce a task vector for the unlearning purpose. Finally, the scripts evaluate the model's unlearning performance after incorporating the task vector. Please refer to the scripts for detailed execution commands.
 * To run experiment on Llama model, make sure you have requested access in the official [Meta Llama-2](https://huggingface.co/meta-llama/Llama-2-7b-hf) webpage on HuggingFace and have logged into your HuggingFace account with the access token. 
 
-    `huggingface-cli login`
+    ```
+    huggingface-cli login
+    ```
 
 ## Acknowledgement
 This repo refers to the following projects:

@@ -46,3 +46,7 @@ This repo refers to the following projects:
     url={https://arxiv.org/abs/2403.08994}
 }
 ```
+
+## Contact
+
+Questions or comments can be sent to "leig AT usc.edu".
